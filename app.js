@@ -1,45 +1,26 @@
 const express = require('express');
-const morgan = require('morgan');
+const mongoose = require('mongoose');
+const authRoutes = require('./routes/authRoutes');
+const cookieParser = require('cookie-parser');
+const { requireAuth } = require('./middleware/authMiddleware');
 
-//express app
 const app = express();
 
-// register view engine
+// middleware
+app.use(express.static('public'));
+app.use(express.json());
+app.use(cookieParser());
+
+// view engine
 app.set('view engine', 'ejs');
 
+// database connection
+const dbURI = 'mongodb+srv://shaun:test1234@cluster0.del96.mongodb.net/node-auth';
+mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex:true })
+  .then((result) => app.listen(3000))
+  .catch((err) => console.log(err));
 
-//listen for request
-app.listen(3000);
-
-//middleware and static files
-app.use(express.static('public'))
- 
-app.use(morgan('dev'));
- 
 // routes
-app.get('/', (req, res)=> {
-    res.redirect('')
-
-// res.send('<p>home page </p>');
-res.render('index', {title: 'Home', blogs});
-});
-app.get('/about', (req, res)=> {
-    // res.send('<p>about page </p>');
-    res.render('about', {title: 'About'});
-
-});
-// blog routes
-app.get('/blogs')
-
-//redirects
-// app.get('/about-us', (req, res)=> {
-//     res.redirect('/about');
-// });
-app.get('/blogs/create', (req, res) =>{
-    res.render('create', {title: 'create a new blog'});
-})
-
-//404 page
-app.use((req, res)=>{
-    res.status(404).render('404', {title: '404'});
-});
+app.get('/', (req, res) => res.render('home'));
+app.get('/smoothies', requireAuth, (req, res) => res.render('smoothies'));
+app.use(authRoutes);
